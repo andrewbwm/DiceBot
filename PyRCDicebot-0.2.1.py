@@ -25,8 +25,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+
 from ircutils import bot, format
 import re, random
+import operator
+import sys
+
 def dice_eval(s):
     sCom = ""
     if re.search(r"\(.*\)", s):
@@ -77,70 +81,43 @@ def dice_eval(s):
     pStack.append(" " + str(sCom)) # Append comment
     return ''.join(pStack)
 
-def channelAnnounce(inString, boldText=False, underText=False, foreColor=None):
-    if boldText:
-        inString = format.bold(inString)
-    if underText:
-        inString = format.underline(inString)
-    if foreColor == None:
-        pass
-    elif foreColor == "Black":
-        inString = format.color(inString, format.BLACK)
-    elif foreColor == "Navy Blue":
-        inString = format.color(inString, format.NAVY_BLUE)
-    elif foreColor == "Green":
-        inString = format.color(inString, format.GREEN)
-    elif foreColor == "Red":
-        inString = format.color(inString, format.RED)
-    elif foreColor == "Lime Green":
-        inString = format.color(inString, format.LIME_GREEN)
-    elif foreColor == "Teal":
-        inString = format.color(inString, format.TEAL)
-    elif foreColor == "Aqua":
-        inString = format.color(inString, format.AQUA)
-    elif foreColor == "Blue":
-        inString = format.color(inString, format.BLUE)
-    elif foreColor == "Brown":
-        inString = format.color(inString, format.BROWN)
-    elif foreColor == "Purple":
-        inString = format.color(inString, format.PURPLE)
-    elif foreColor == "Olive":
-        inString = format.color(inString, format.OLIVE)
-    elif foreColor == "Yellow":
-        inString = format.color(inString, format.YELLOW)
-    elif foreColor == "Pink":
-        inString = format.color(inString, format.PINK)
-    elif foreColor == "Dark Gray":
-        inString = format.color(inString, format.DARK_GRAY)
-    elif foreColor == "Light Gray":
-        inString = format.color(inString, format.LIGHT_GRAY)
-    elif foreColor == "White":
-        inString = format.color(inString, format.WHITE)
-    return inString
-    
+def do_roll(user, s):
+    if s == "":
+         return ""
+    return user + " rolled: " + str(dice_eval(s))
+
+def do_command(user, cmd, args):
+    if cmd == "roll":
+        return do_roll(user, reduce(operator.add, args, ""))
+    if cmd == "begin":
+        return "**********Begin Session**********"
+    if cmd == "pause":
+        return "**********Pause Session**********"
+    if cmd == "end":
+        return "**********End Session**********"
+    if cmd == "miau":
+        return "**********Miau Session**********"
+    return ">^o^<"
+
 class DiceBot(bot.SimpleBot):
     def on_channel_message(self, event):
         if event.message[0] != "!":
             return
-        if event.message[1:5] == "roll":
-            dice_output = str(dice_eval(event.message[6:]))
-            if len(dice_output)>400:
-                while len(dice_output)>400:
-                    self.send_message(event.target, event.source + " rolled: " + dice_output[:400])
-                    dice_output = dice_output[400:]
-                self.send_message(event.target, event.source + " rolled: " + dice_output)
-            else:
-                self.send_message(event.target, event.source + " rolled: " + dice_output)
-        
-        if event.message[1:6] == "begin":
-            self.send_message(event.target, channelAnnounce("**********Begin Session**********",True, False,"Green"))
-        if event.message[1:6] == "pause":
-            self.send_message(event.target, channelAnnounce("**********Pause   Session**********",True, False,"Pause"))
-        if event.message[1:4] == "end":
-            self.send_message(event.target, channelAnnounce("**********End Session**********",True, False,"Red"))
+        split_str = event.message[1:].split()
+        if len(split_str) < 1:
+            return
+        out_str = do_command(event.source, split_str[0], split_str[1:])
+        self.send_message(event.target, out_str)
 
+DEBUG = 0
 
 if __name__ == "__main__":
+    if DEBUG:
+        while True:
+            split_str = sys.stdin.readline().split()
+            if len(split_str) < 1:
+                continue
+            print do_command("miau", split_str[0], split_str[1:])
     dice = DiceBot("PyRC_Dicebot")
     dice.connect("irc.freenode.net", channel=["#thh-dnd"])
     dice.start()
