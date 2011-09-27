@@ -77,18 +77,68 @@ def dice_eval(s):
     if len(pStack):
         pStack[-1] = pStack[-1][:-2]
         pStack.append("= ")
-    pStack.append(str(stack.pop())) # Append total
+
+    total = stack.pop()
+    pStack.append(str(total)) # Append total
     pStack.append(" " + str(sCom)) # Append comment
-    return ''.join(pStack)
+
+    return (''.join(pStack), total)
 
 def do_roll(user, s):
     if s == "":
          return ""
-    return user + " rolled: " + str(dice_eval(s))
+    (output, value) = dice_eval(s)
+    return user + " rolled: " + output
+
+# Initiative dictionary: (name, initiative) pairs
+initiative = {}
+
+def initiative_add(name, dice_string, monster = False):
+    (output, value) = dice_eval(dice_string)
+    if monster:
+        value = value + 0.1 # On equal values, monsters have priority
+    initiative[name] = value
+    return name + " rolled: " + output
+
+def initiative_query(name):
+    if name not in initiative:
+        return "No initiative value for " + name
+    value = str(int(initiative[name]))
+    return "Initiative value for " + name + ": " + value
+
+def do_initiative(user, args):
+    global initiative
+
+    if len(args) == 0: # Query
+        sorted_pairs = sorted(initiative.items(), key = lambda x : x[1],
+                                                 reverse = True)
+        formatted_pairs = map(lambda(name, value):
+                            name + "(" + str(int(value)) + ") ", sorted_pairs)
+        return reduce(operator.add, formatted_pairs, "")
+
+    if len(args) == 1 and not args[0].isdigit(): # Single-value query
+        return initiative_query(name = args[0])
+
+    if len(args) >= 1:
+        if args[0] == 'reset':
+            initiative = {}
+            return "Initiative scores reset"
+        if args[0].isdigit():  # Player initiative roll
+            return initiative_add(name = user, 
+                dice_string = "d20 + " + reduce(operator.add, args, ""))
+
+    if len(args) >= 2: # Monster initiative roll
+        return initiative_add(name = args[0],
+            dice_string = "d20 + " + reduce(operator.add, args[1:], ""),
+            monster = True)
+
+    return ">^o^<"
 
 def do_command(user, cmd, args):
     if cmd == "roll":
         return do_roll(user, reduce(operator.add, args, ""))
+    if cmd == "initiative":
+        return do_initiative(user, args)
     if cmd == "begin":
         return "**********Begin Session**********"
     if cmd == "pause":
