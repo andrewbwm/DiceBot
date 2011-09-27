@@ -55,7 +55,10 @@ def dice_eval(s):
             tValue = 0
             dice = stack.pop()
             for i in xrange(stack.pop()):
-                temp = random.randint(1,dice)
+                if dice == 0:
+                    temp = 0
+                else:
+                    temp = random.randint(1,dice)
                 tValue += temp
                 pStack.append("d" + str(dice) + ":" + str(temp)+" + ")
             stack.append(tValue)
@@ -67,8 +70,10 @@ def dice_eval(s):
             return
 
     assert len(stack) == 1
-    pStack[-1] = pStack[-1][:-2]
-    pStack.append("= " + str(stack.pop())) # Append total
+    if len(pStack):
+        pStack[-1] = pStack[-1][:-2]
+        pStack.append("= ")
+    pStack.append(str(stack.pop())) # Append total
     pStack.append(" " + str(sCom)) # Append comment
     return ''.join(pStack)
 
