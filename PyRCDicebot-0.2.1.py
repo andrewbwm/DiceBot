@@ -71,9 +71,9 @@ def dice_eval(s):
         elif token.isdigit():
             stack.append(int(token))
         elif token == "(":
-            return
+            return (None, 0)
         else:
-            return
+            return (None, 0)
 
     assert len(stack) == 1
     if len(pStack):
@@ -99,7 +99,8 @@ def initiative_add(name, dice_string, monster = False):
     (output, value) = dice_eval(dice_string)
     if monster:
         value = value + 0.1 # On equal values, monsters have priority
-    initiative[name] = value
+    if value >= 1:
+        initiative[name] = value
     return name + " rolled: " + output
 
 def initiative_query(name):
