@@ -31,6 +31,8 @@ import re, random
 import operator
 import sys
 
+import config
+
 def dice_eval(s):
     sCom = ""
     if re.search(r"\(.*\)", s):
@@ -159,17 +161,15 @@ class DiceBot(bot.SimpleBot):
         out_str = do_command(event.source, split_str[0], split_str[1:])
         self.send_message(event.target, out_str)
 
-DEBUG = 0
-
 if __name__ == "__main__":
-    if DEBUG:
+    if config.DEBUG:
         while True:
             split_str = sys.stdin.readline().split()
             if len(split_str) < 1:
                 continue
             print do_command("miau", split_str[0], split_str[1:])
-    dice = DiceBot("PyRC_Dicebot")
-    dice.connect("irc.freenode.net", channel=["#thh-dnd"])
+    dice = DiceBot(config.name)
+    dice.connect(config.server, channel=[config.channel])
     dice.start()
 
 '''
