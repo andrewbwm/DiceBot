@@ -14,19 +14,36 @@ import shlex
 import re,random
 
 # parser class
-# TODO: pStack
 class diceparse(shlex.shlex):
 
     # constructor
     def __init__(self, s):
+        self.sCom = "" # default comment
+        if re.search(r"\(.*\)", s):
+            self.sCom = re.search(r"\(.*\)", s).group(0) # Take comment aside
         s = s.replace(" ","")
         s = re.sub(r"\(.*\)", r"",s) # Strip comment
         s = re.sub(r"(\d+|[d+*-])", r"\1 ",s) # seperate tokens by spaces
         s = re.sub(r"(^|[+*] )d", r"\g<1>1 d",s) # e.g. change d6 to 1d6
         shlex.shlex.__init__(self,s)
 
-    # eval function
+        # other class variables
+        self.pStack = []
+
+    # public eval function
     def dice_eval(self):
+        total = self.__dice_eval()
+
+        if len(self.pStack):
+            self.pStack[-1] = self.pStack[-1][:-2] # remove last " + "
+            self.pStack.append("= ")
+        self.pStack.append(str(total)) # Append total
+        self.pStack.append(" " + str(self.sCom)) # Append comment
+
+        return (''.join(self.pStack), total)
+
+    # eval function
+    def __dice_eval(self):
         # first term
         term_tok = self.__term_eval()
 
@@ -38,11 +55,11 @@ class diceparse(shlex.shlex):
             return term_tok
         elif op_tok == '+':
             # next tokens
-            expr_tok = self.dice_eval()
+            expr_tok = self.__dice_eval()
             return term_tok + expr_tok
         elif op_tok == '-':
             # next tokens
-            expr_tok = self.dice_eval()
+            expr_tok = self.__dice_eval()
             return term_tok - expr_tok
         else:
             raise ParseException(str(op_tok) + ": unknown operator")
@@ -72,12 +89,21 @@ class diceparse(shlex.shlex):
             if not sides:
                 raise ParseException("number of sides not specified")
 
-            return self.__roll(tok, sides)
+            return self.__roll(tok, int(sides))
         else:
             raise ParseException(str(tok) + ": unknown operator")
 
     def __roll(self, dies, sides):
-        return 42 # TODO
+        # roll it
+        tValue = 0
+        for i in xrange(dies):
+            if sides == 0:
+                temp = 0
+            else:
+                temp = random.randint(1,sides)
+            tValue += temp
+            self.pStack.append("d" + str(sides) + ":" + str(temp)+" + ")
+        return tValue
 
 class ParseException(Exception):
     def __init__(self, s):
@@ -86,5 +112,5 @@ class ParseException(Exception):
         return repr(self,s)
 
 # test
-obj = diceparse("d42 + 3 - 2 * 5")
+obj = diceparse("2 * 4 - 2*3 + 5")
 print obj.dice_eval()
