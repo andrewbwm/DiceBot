@@ -27,6 +27,7 @@ THE SOFTWARE.
 """
 
 from ircutils import bot, format
+from diceparse import diceparse
 import re, random
 import operator
 import sys
@@ -89,14 +90,14 @@ def dice_eval(s):
 def do_roll(user, s):
     if s == "":
          return ""
-    (output, value) = dice_eval(s)
+    (output, value) = diceparse(s).dice_eval()
     return user + " rolled: " + output
 
 # Initiative dictionary: (name, initiative) pairs
 initiative = {}
 
 def initiative_add(name, dice_string, monster = False):
-    (output, value) = dice_eval(dice_string)
+    (output, value) = diceparse(s).dice_eval()
     if monster:
         value = value + 0.1 # On equal values, monsters have priority
     if value >= 1:
