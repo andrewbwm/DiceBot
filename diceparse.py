@@ -23,7 +23,8 @@ class diceparse(shlex.shlex):
             self.sCom = re.search(r"\(.*\)", s).group(0) # Take comment aside
         s = s.replace(" ","")
         s = re.sub(r"\(.*\)", r"",s) # Strip comment
-        s = re.sub(r"(\d+|[d+*-])", r"\1 ",s) # seperate tokens by spaces
+        s = re.sub(r"^(\+|\-)", r"0\1",s)
+        s = re.sub(r"(\d+|[d+*-])", r"\1 ",s) # separate tokens by spaces
         s = re.sub(r"(^|[-+*] )d", r"\g<1>1 d",s) # e.g. change d6 to 1d6
         shlex.shlex.__init__(self,s)
 
@@ -113,5 +114,5 @@ class ParseException(Exception):
         return repr(self,s)
 
 # test
-obj = diceparse("3d3 - d10 + 2 * 4 - 2*3 + 5")
-print obj.dice_eval()
+# obj = diceparse("3d3 - d10 + 2 * 4 - 2*3 + 5")
+# print obj.dice_eval()
