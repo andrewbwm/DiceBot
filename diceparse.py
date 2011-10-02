@@ -24,7 +24,7 @@ class diceparse(shlex.shlex):
         s = s.replace(" ","")
         s = re.sub(r"\(.*\)", r"",s) # Strip comment
         s = re.sub(r"(\d+|[d+*-])", r"\1 ",s) # seperate tokens by spaces
-        s = re.sub(r"(^|[+*] )d", r"\g<1>1 d",s) # e.g. change d6 to 1d6
+        s = re.sub(r"(^|[-+*] )d", r"\g<1>1 d",s) # e.g. change d6 to 1d6
         shlex.shlex.__init__(self,s)
 
         # other class variables
@@ -50,19 +50,20 @@ class diceparse(shlex.shlex):
         # operator
         op_tok = self.get_token()
 
-        if not op_tok:
-            # simple expression
-            return term_tok
-        elif op_tok == '+':
-            # next tokens
-            expr_tok = self.__dice_eval()
-            return term_tok + expr_tok
-        elif op_tok == '-':
-            # next tokens
-            expr_tok = self.__dice_eval()
-            return term_tok - expr_tok
-        else:
-            raise ParseException(str(op_tok) + ": unknown operator")
+        while op_tok:
+            # normally another term follows
+            term2_tok = self.__term_eval()
+
+            if op_tok == '+':
+                term_tok = term_tok + term2_tok
+            elif op_tok == '-':
+                term_tok = term_tok - term2_tok
+            else:
+                raise ParseException(op_tok + ": unknown operator")
+
+            op_tok = self.get_token()
+
+        return term_tok
 
     # evaluate a term
     def __term_eval(self):
@@ -112,5 +113,5 @@ class ParseException(Exception):
         return repr(self,s)
 
 # test
-obj = diceparse("2 * 4 - 2*3 + 5")
+obj = diceparse("3d3 - d10 + 2 * 4 - 2*3 + 5")
 print obj.dice_eval()
