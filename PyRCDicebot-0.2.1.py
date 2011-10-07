@@ -101,7 +101,12 @@ def initiative_add(name, dice_string, monster = False):
     if monster:
         value = value + 0.1 # On equal values, monsters have priority
     if value >= 1:
-        initiative[name] = value
+        if name == "Velten":
+            if name not in initiative or initiative[name] < value:
+                initiative[name] = value
+        else:
+            initiative[name] = value
+
     return name + " rolled: " + output
 
 def initiative_query(name):
@@ -128,7 +133,7 @@ def do_initiative(user, args):
             initiative = {}
             return "Initiative scores reset"
         if args[0].isdigit():  # Player initiative roll
-            return initiative_add(name = user, 
+            return initiative_add(name = user,
                 dice_string = "d20 + " + reduce(operator.add, args, ""))
 
     if len(args) >= 2: # Monster initiative roll
