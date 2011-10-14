@@ -141,13 +141,64 @@ def do_initiative(user, args):
             dice_string = "d20 + " + reduce(operator.add, args[1:], ""),
             monster = True)
 
-    return ">^o^<"
+    return "Cats are not cool"
+
+damage = {}
+def damage_add(name, dice_string, monster = False):
+    (output, value) = diceparse(dice_string).dice_eval()
+    if name in damage:
+        damage[name] += value
+    else:
+        damage[name] = value
+    return name + " has " + str(damage[name]) + " damage"
+
+def damage_query(name):
+    if name not in damage:
+        return "No damage value for " + name
+    value = str(int(damage[name]))
+    return "Damage value for " + name + ": " + value
+
+def do_damage(user, args):
+    global damage
+
+    if len(args) == 0: # Query
+        sorted_pairs = sorted(damage.items(), key = lambda x : x[1],
+                                                 reverse = True)
+        formatted_pairs = map(lambda(name, value):
+                            name + "(" + str(int(value)) + ") ", sorted_pairs)
+        return reduce(operator.add, formatted_pairs, "")
+
+    if len(args) == 1 and args[0][0] == "-":
+        return damage_add(name = user,
+            dice_string = reduce(operator.add, args, ""))
+    if len(args) == 2 and args[0].strip() == "reset":
+            del damage[args[1]]
+            return "Damage score reset for " + args[1]
+    if len(args) == 1 and args[0].strip() == "reset":
+            damage = {}
+            return "Damage scores reset"
+    if len(args) == 1 and not args[0].isdigit(): # Single-value query
+        return damage_query(name = args[0])
+
+    if len(args) >= 1:
+        if args[0].isdigit():  # Player damage roll
+            return damage_add(name = user,
+                dice_string = reduce(operator.add, args, ""))
+
+    if len(args) >= 2: # Monster damage roll
+        return damage_add(name = args[0],
+            dice_string = reduce(operator.add, args[1:], ""),
+            monster = True)
+
+    return "W00T"
 
 def do_command(user, cmd, args):
     if cmd == "roll":
         return do_roll(user, reduce(operator.add, args, ""))
     if cmd == "initiative":
         return do_initiative(user, args)
+    if cmd == "damage":
+        return do_damage(user, args)
     if cmd == "begin":
         return "**********Begin Session**********"
     if cmd == "pause":
@@ -156,7 +207,9 @@ def do_command(user, cmd, args):
         return "**********End Session**********"
     if cmd == "miau":
         return "**********Miau Session**********"
-    return ">^o^<"
+    if cmd == "tpk":
+        return "Roll new characters"
+    return "Cats are not cool"
 
 class DiceBot(bot.SimpleBot):
     def on_channel_message(self, event):
