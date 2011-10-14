@@ -219,7 +219,11 @@ class DiceBot(bot.SimpleBot):
         if len(split_str) < 1:
             return
         out_str = do_command(event.source, split_str[0], split_str[1:])
-        self.send_message(event.target, out_str)
+        if isinstance(out_str, list):
+            for s in out_str:
+                self.send_message(event.target, s)
+        if isinstance(out_str, str):
+            self.send_message(event.target, out_str)
 
 if __name__ == "__main__":
     if config.DEBUG:
