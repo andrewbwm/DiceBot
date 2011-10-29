@@ -90,6 +90,8 @@ class diceparse(shlex.shlex):
             sides = self.get_token()
             if not sides:
                 raise ParseException("number of sides not specified")
+            if not sides.isdigit():
+                raise ParseException("number of sides is not a number")
 
             return self.__roll(tok, int(sides))
         else:
