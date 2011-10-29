@@ -27,12 +27,17 @@ THE SOFTWARE.
 """
 
 from ircutils import bot, format
-from diceparse import diceparse
+from diceparse import diceparse, ParseException
 import re, random
 import operator
 import sys
 
 import config
+
+# "constants"
+PARSE_ERROR = "couldn't parse input"
+def parse_error_message(name):
+    print name + " inputted some garbage"
 
 def dice_eval(s):
     sCom = ""
@@ -90,14 +95,22 @@ def dice_eval(s):
 def do_roll(user, s):
     if s == "":
          return ""
-    (output, value) = diceparse(s).dice_eval()
+    try:
+        (output, value) = diceparse(s).dice_eval()
+    except ParseException:
+        parse_error_message(user)
+        return PARSE_ERROR
     return user + " rolled: " + output
 
 # Initiative dictionary: (name, initiative) pairs
 initiative = {}
 
 def initiative_add(name, dice_string, monster = False):
-    (output, value) = diceparse(s).dice_eval()
+    try:
+        (output, value) = diceparse(dice_string).dice_eval()
+    except ParseException:
+        parse_error_message(name)
+        return PARSE_ERROR
     if monster:
         value = value + 0.1 # On equal values, monsters have priority
     if value >= 1:
@@ -145,7 +158,11 @@ def do_initiative(user, args):
 
 damage = {}
 def damage_add(name, dice_string, monster = False):
-    (output, value) = diceparse(dice_string).dice_eval()
+    try:
+        (output, value) = diceparse(dice_string).dice_eval()
+    except ParseException:
+        parse_error_message(name)
+        return PARSE_ERROR
     if name in damage:
         damage[name] += value
     else:
