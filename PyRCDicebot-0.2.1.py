@@ -231,15 +231,15 @@ def do_status(user, args):
 		status.append(str(i) + ". " + x + "\t\t" + str(sorted_ent[x][0]) + "\t\t" + str(sorted_ent[x][1]))
 	return status
 
-def do_command(user, cmd, args):
+def do_command(user, cmd, arg):
     if cmd == "roll":
-        return do_roll(user, reduce(operator.add, args, ""))
+        return do_roll(user, arg)
     if cmd == "initiative":
-        return do_initiative(user, args)
+        return do_initiative(user, arg.split())
     if cmd == "damage":
-        return do_damage(user, args)
+        return do_damage(user, arg.split())
     if cmd == "status":
-        return do_status(user, args)
+        return do_status(user, arg.split())
     if cmd == "begin":
         return "**********Begin Session**********"
     if cmd == "pause":
@@ -256,10 +256,17 @@ class DiceBot(bot.SimpleBot):
     def on_channel_message(self, event):
         if event.message[0] != "!":
             return
-        split_str = event.message[1:].split()
-        if len(split_str) < 1:
+
+        # input_str = string without the leading '!'
+        input_str = event.message[1:].strip()
+        if len(input_str) < 1:
             return
-        out_str = do_command(event.source, split_str[0], split_str[1:])
+
+        # command = first word of input string
+        command = input_str.split()[0]
+
+        out_str = do_command(event.source, command,  input_str[len(command):])
+
         if isinstance(out_str, list):
             for s in out_str:
                 self.send_message(event.target, s)
