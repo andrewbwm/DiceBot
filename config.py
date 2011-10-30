@@ -1,5 +1,5 @@
 DEBUG = 0
 
-name = 'PyRC_Dicebot'
+name = 'Imp'
 channel = '#thh-dnd'
 server = 'irc.freenode.net'

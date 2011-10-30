@@ -28,6 +28,7 @@ THE SOFTWARE.
 
 from ircutils import bot, format
 from diceparse import diceparse, ParseException
+from collections import OrderedDict
 import re, random
 import operator
 import sys
@@ -138,13 +139,17 @@ def do_initiative(user, args):
                             name + "(" + str(int(value)) + ") ", sorted_pairs)
         return reduce(operator.add, formatted_pairs, "")
 
+    if len(args) == 2 and args[0].strip() == "reset":
+        del initiative[args[1]]
+        return "Initiative score reset for " + args[1]
+    if len(args) == 1 and args[0].strip() == "reset":
+        initiative = {}
+        return "Initiative scores reset"
+
     if len(args) == 1 and not args[0].isdigit(): # Single-value query
         return initiative_query(name = args[0])
 
     if len(args) >= 1:
-        if args[0] == 'reset':
-            initiative = {}
-            return "Initiative scores reset"
         if args[0].isdigit():  # Player initiative roll
             return initiative_add(name = user,
                 dice_string = "d20 + " + reduce(operator.add, args, ""))
@@ -209,6 +214,23 @@ def do_damage(user, args):
 
     return "W00T"
 
+entities = {}
+
+def do_status(user, args):
+	global entities
+	for i in initiative:
+		if i in damage:
+			entities[i] = (int(initiative[i]), damage[i])
+		else:
+			entities[i] = (int(initiative[i]), 0)
+	sorted_ent = OrderedDict(sorted(entities.items(), key=lambda t: t[1][0], reverse=True))
+	status = []
+	i = 0
+	for x in sorted_ent:
+		i += 1
+		status.append(str(i) + ". " + x + "\t\t" + str(sorted_ent[x][0]) + "\t\t" + str(sorted_ent[x][1]))
+	return status
+
 def do_command(user, cmd, args):
     if cmd == "roll":
         return do_roll(user, reduce(operator.add, args, ""))
@@ -216,6 +238,8 @@ def do_command(user, cmd, args):
         return do_initiative(user, args)
     if cmd == "damage":
         return do_damage(user, args)
+    if cmd == "status":
+        return do_status(user, args)
     if cmd == "begin":
         return "**********Begin Session**********"
     if cmd == "pause":
